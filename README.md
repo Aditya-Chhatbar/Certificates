@@ -17,7 +17,7 @@ Learned about:
 - No-code application development using Lovable.
 - Generating cinematic images and videos.
 
-[📄 View Certificate](AI/generative-ai-mastermind.pdf)
+[📄 View Certificate](generative-ai-mastermind.pdf)
 
 ---
 
@@ -27,7 +27,7 @@ Learned about:
 
 Completed a microlearning module covering semiconductor fundamentals, followed by assessments to evaluate understanding.
 
-[📄 View Certificate](Semiconductors/intel-semiconductor.pdf)
+[📄 View Certificate](intel-semiconductor.pdf)
 
 ---
 
@@ -35,7 +35,9 @@ Completed a microlearning module covering semiconductor fundamentals, followed b
 
 **Tools:** DSCH 4.0 and Microwind 4.0
 
-Practised designing logic circuits and exploring their layouts using VLSI design tools.
+Learnt & Practised designing logic circuits and exploring their layouts using VLSI design tools.
+
+[📄 View Certificate](IGTR-Certificate.pdf)
 
 ---
 
