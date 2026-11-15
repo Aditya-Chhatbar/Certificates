@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Aditya Chhatbar's certifications and technical learning journey."
+    />
+    <meta name="theme-color" content="#f8f9fa" />
+    <title>Certifications &amp; Learning — Aditya Chhatbar</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="./js/data.js" defer></script>
+    <script src="./js/script.js" defer></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="#top">Aditya Chhatbar</a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a class="nav-link is-current" href="#certifications" aria-current="page">Certifications</a>
+          <span class="nav-link is-upcoming" aria-disabled="true">Projects</span>
+          <span class="nav-link is-upcoming" aria-disabled="true">Skills</span>
+          <span class="nav-link is-upcoming" aria-disabled="true">About</span>
+        </nav>
+      </header>
+
+      <main id="top">
+        <section class="hero" aria-labelledby="page-title">
+          <p class="eyebrow">My learning journey</p>
+          <h1 id="page-title">Certifications &amp; Learning</h1>
+          <p class="hero-description">
+            A record of technical training, courses, workshops, and learning experiences.
+            This page will grow alongside my work and interests.
+          </p>
+        </section>
+
+        <section id="certifications" class="certifications" aria-labelledby="certifications-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Selected coursework</p>
+              <h2 id="certifications-title">Certifications</h2>
+            </div>
+            <p class="section-note">Listed newest first</p>
+          </div>
+
+          <div class="certificate-tools">
+            <div class="search-wrap">
+              <label for="certificate-search">Search certifications</label>
+              <input
+                id="certificate-search"
+                type="search"
+                placeholder="Title, organization, or topic"
+                autocomplete="off"
+              />
+            </div>
+            <div class="filter-wrap">
+              <span class="filter-label" id="category-filter-label">Filter by category</span>
+              <div id="category-filters" class="category-filters" aria-labelledby="category-filter-label"></div>
+            </div>
+          </div>
+
+          <p id="result-count" class="result-count" role="status" aria-live="polite"></p>
+          <div id="timeline" class="timeline" aria-live="polite"></div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <a class="footer-name" href="#top">Aditya Chhatbar</a>
+        <p>Certifications &amp; technical learning</p>
+      </footer>
+    </div>
+  </body>
+</html>

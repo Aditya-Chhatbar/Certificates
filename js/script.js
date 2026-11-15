@@ -1,0 +1,236 @@
+const certificateData = Array.isArray(window.certificateData) ? window.certificateData : [];
+const searchInput = document.getElementById('certificate-search');
+const filtersContainer = document.getElementById('category-filters');
+const resultCount = document.getElementById('result-count');
+const timeline = document.getElementById('timeline');
+let selectedCategory = 'All';
+
+function getDateInfo(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(value);
+  if (!match) {
+    return undefined;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = match[3] ? Number(match[3]) : null;
+  const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  if (year < 1 || month < 1 || month > 12 || (day !== null && (day < 1 || day > daysInMonth[month - 1]))) {
+    return undefined;
+  }
+
+  const date = new Date(0);
+  date.setUTCFullYear(year, month - 1, day || 1);
+  date.setUTCHours(0, 0, 0, 0);
+  const options = day === null
+    ? { year: 'numeric', month: 'long', timeZone: 'UTC' }
+    : { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+
+  return {
+    year,
+    timestamp: date.getTime(),
+    label: new Intl.DateTimeFormat('en', options).format(date)
+  };
+}
+
+function hasSafeCertificatePath(path) {
+  return typeof path === 'string'
+    && path.startsWith('certificates/')
+    && /\.pdf$/i.test(path)
+    && path.split('/').every((part) => part && part !== '.' && part !== '..' && !/[?#]/.test(part));
+}
+
+function validateCertificates(entries) {
+  return entries.reduce((validEntries, entry, index) => {
+    const dateInfo = getDateInfo(entry.date);
+    const isValid = typeof entry.title === 'string'
+      && entry.title.trim() !== ''
+      && typeof entry.category === 'string'
+      && entry.category.trim() !== ''
+      && typeof entry.description === 'string'
+      && Array.isArray(entry.skills)
+      && entry.skills.every((skill) => typeof skill === 'string')
+      && hasSafeCertificatePath(entry.certificate)
+      && dateInfo !== undefined;
+
+    if (!isValid) {
+      console.error(`Certificate entry ${index + 1} is invalid and was skipped.`);
+      return validEntries;
+    }
+
+    if (entry.verification && !/^https?:\/\/\S+$/i.test(entry.verification)) {
+      console.error(`Certificate entry "${entry.title}" has an invalid verification URL; it was omitted.`);
+      validEntries.push({ ...entry, dateInfo, verification: '' });
+      return validEntries;
+    }
+
+    validEntries.push({ ...entry, dateInfo });
+    return validEntries;
+  }, []);
+}
+
+function createElement(tagName, className, text) {
+  const element = document.createElement(tagName);
+  if (className) {
+    element.className = className;
+  }
+  if (text !== undefined) {
+    element.textContent = text;
+  }
+  return element;
+}
+
+function createLink(label, href) {
+  const link = createElement('a', 'entry-link', label);
+  link.href = href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  return link;
+}
+
+function createCertificateEntry(certificate) {
+  const item = createElement('li', 'timeline-item');
+  const article = createElement('article', 'timeline-entry');
+  const title = createElement('h3', 'entry-title', certificate.title);
+  const organization = createElement(
+    'p',
+    'entry-organization',
+    certificate.organization || 'Organization not listed'
+  );
+  const description = createElement('p', 'entry-description', certificate.description);
+  const topicList = createElement('ul', 'topic-list');
+  const links = createElement('div', 'entry-links');
+
+  if (certificate.dateInfo) {
+    const date = createElement('time', 'entry-date', certificate.dateInfo.label);
+    date.dateTime = certificate.date;
+    article.append(title, organization, date, description);
+  } else {
+    const date = createElement('p', 'entry-date', 'Completion date not listed');
+    article.append(title, organization, date, description);
+  }
+
+  certificate.skills.forEach((skill) => {
+    topicList.append(createElement('li', 'topic-tag', skill));
+  });
+
+  links.append(createLink('View certificate ↗', `./${certificate.certificate}`));
+  if (certificate.verification) {
+    links.append(createLink('Verify credential ↗', certificate.verification));
+  }
+
+  article.append(topicList, links);
+  item.append(article);
+  return item;
+}
+
+function renderFilters(certificates) {
+  const categories = Array.from(new Set(certificates.map((item) => item.category)))
+    .sort((left, right) => left.localeCompare(right));
+  const filters = ['All', ...categories];
+
+  filtersContainer.replaceChildren();
+  filters.forEach((category) => {
+    const button = createElement('button', 'filter-button', category);
+    button.type = 'button';
+    button.dataset.category = category;
+    button.setAttribute('aria-pressed', String(category === selectedCategory));
+    filtersContainer.append(button);
+  });
+}
+
+function getFilteredCertificates(certificates) {
+  const query = searchInput.value.trim().toLocaleLowerCase();
+
+  return certificates
+    .filter((certificate) => {
+      const matchesCategory = selectedCategory === 'All' || certificate.category === selectedCategory;
+      const searchableText = [
+        certificate.title,
+        certificate.organization || '',
+        certificate.category,
+        certificate.summary,
+        ...certificate.skills
+      ].join(' ').toLocaleLowerCase();
+      return matchesCategory && searchableText.includes(query);
+    })
+    .sort((left, right) => {
+      if (!left.dateInfo && !right.dateInfo) {
+        return left.originalIndex - right.originalIndex;
+      }
+      if (!left.dateInfo) {
+        return 1;
+      }
+      if (!right.dateInfo) {
+        return -1;
+      }
+      return right.dateInfo.timestamp - left.dateInfo.timestamp;
+    });
+}
+
+function renderTimeline(certificates) {
+  const matches = getFilteredCertificates(certificates);
+  const resultLabel = matches.length === 1 ? 'certification' : 'certifications';
+  resultCount.textContent = `${matches.length} ${resultLabel}`;
+  timeline.replaceChildren();
+
+  if (matches.length === 0) {
+    timeline.append(
+      createElement(
+        'p',
+        'empty-state',
+        'No certifications match your search. Try another title, organization, topic, or category.'
+      )
+    );
+    return;
+  }
+
+  const groups = new Map();
+  matches.forEach((certificate) => {
+    const year = certificate.dateInfo ? String(certificate.dateInfo.year) : 'Date not listed';
+    if (!groups.has(year)) {
+      groups.set(year, []);
+    }
+    groups.get(year).push(certificate);
+  });
+
+  groups.forEach((entries, year) => {
+    const group = createElement('section', 'timeline-year-group');
+    const heading = createElement('h3', 'year-label', year);
+    const list = createElement('ol', 'timeline-list');
+    entries.forEach((certificate) => list.append(createCertificateEntry(certificate)));
+    group.append(heading, list);
+    timeline.append(group);
+  });
+}
+
+function initializeTimeline() {
+  const certificates = validateCertificates(certificateData)
+    .map((certificate, index) => ({ ...certificate, originalIndex: index }));
+
+  renderFilters(certificates);
+  renderTimeline(certificates);
+
+  searchInput.addEventListener('input', () => renderTimeline(certificates));
+  filtersContainer.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-category]');
+    if (!button) {
+      return;
+    }
+    selectedCategory = button.dataset.category;
+    renderFilters(certificates);
+    renderTimeline(certificates);
+  });
+}
+
+initializeTimeline();
