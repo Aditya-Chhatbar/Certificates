@@ -58,7 +58,8 @@ Open this folder in VS Code, install the **Live Server** extension if it is not 
    {
      title: 'Certificate title',
      organization: 'Issuing organization',
-     date: 'YYYY-MM-DD', // Use YYYY-MM for month-only dates; use null if unknown.
+     date: 'YYYY-MM-DD', // Use "YYYY-MM-DD to YYYY-MM-DD" for date ranges.
+                         // Use YYYY-MM for month-only dates; use null if unknown.
      category: 'A category based on the learning',
      description: 'A concise description of the course or learning.',
      skills: ['Topic one', 'Topic two'],

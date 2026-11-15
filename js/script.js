@@ -5,18 +5,10 @@ const resultCount = document.getElementById('result-count');
 const timeline = document.getElementById('timeline');
 let selectedCategory = 'All';
 
-function getDateInfo(value) {
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
+function parseDate(value) {
   const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(value);
   if (!match) {
-    return undefined;
+    return null;
   }
 
   const year = Number(match[1]);
@@ -26,7 +18,7 @@ function getDateInfo(value) {
   const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   if (year < 1 || month < 1 || month > 12 || (day !== null && (day < 1 || day > daysInMonth[month - 1]))) {
-    return undefined;
+    return null;
   }
 
   const date = new Date(0);
@@ -38,9 +30,39 @@ function getDateInfo(value) {
 
   return {
     year,
+    month,
+    day,
     timestamp: date.getTime(),
     label: new Intl.DateTimeFormat('en', options).format(date)
   };
+}
+
+function getDateInfo(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const range = /^(\d{4}-\d{2}-\d{2}) to (\d{4}-\d{2}-\d{2})$/.exec(value);
+  if (range) {
+    const start = parseDate(range[1]);
+    const end = parseDate(range[2]);
+    if (!start || !end || end.timestamp < start.timestamp) {
+      return undefined;
+    }
+
+    const label = start.year === end.year && start.month === end.month
+      ? `${new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' }).format(new Date(start.timestamp))} ${start.day}–${end.day}, ${start.year}`
+      : `${start.label} – ${end.label}`;
+
+    return { year: start.year, timestamp: start.timestamp, label, isRange: true };
+  }
+
+  const date = parseDate(value);
+  return date ? { ...date, isRange: false } : undefined;
 }
 
 function hasSafeCertificatePath(path) {
@@ -112,8 +134,14 @@ function createCertificateEntry(certificate) {
   const links = createElement('div', 'entry-links');
 
   if (certificate.dateInfo) {
-    const date = createElement('time', 'entry-date', certificate.dateInfo.label);
-    date.dateTime = certificate.date;
+    const date = createElement(
+      certificate.dateInfo.isRange ? 'p' : 'time',
+      'entry-date',
+      certificate.dateInfo.label
+    );
+    if (!certificate.dateInfo.isRange) {
+      date.dateTime = certificate.date;
+    }
     article.append(title, organization, date, description);
   } else {
     const date = createElement('p', 'entry-date', 'Completion date not listed');
@@ -159,7 +187,7 @@ function getFilteredCertificates(certificates) {
         certificate.title,
         certificate.organization || '',
         certificate.category,
-        certificate.summary,
+        certificate.description,
         ...certificate.skills
       ].join(' ').toLocaleLowerCase();
       return matchesCategory && searchableText.includes(query);
