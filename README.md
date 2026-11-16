@@ -7,7 +7,7 @@ A collection of courses, certifications, and technical learning experiences.
 ## 🤖 Generative AI Mastermind
 
 **Organization:** Outskill  
-**Date:** June 2026
+**Date:** June 6–7, 2026
 
 Learned about:
 
@@ -25,6 +25,8 @@ Learned about:
 
 **Organization:** Intel
 
+**Date:** June 6, 2026
+
 Completed a microlearning module covering semiconductor fundamentals, followed by assessments to evaluate understanding.
 
 [📄 View Certificate](certificates/intel-semiconductor.pdf)
@@ -35,7 +37,7 @@ Completed a microlearning module covering semiconductor fundamentals, followed b
 
 **Organization:** IGTR, Ahmedabad
 
-**Date:** 15 June - June 29, 2026
+**Date:** June 15–29, 2026
 
 **Tools:** DSCH 4.0 and Microwind 4.0
 
@@ -48,6 +50,8 @@ Learnt & Practised designing logic circuits and exploring their layouts using VL
 ## Run locally
 
 Open this folder in VS Code, install the **Live Server** extension if it is not already installed, then right-click `index.html` and choose **Open with Live Server**. The site uses only HTML, CSS, and vanilla JavaScript.
+
+Certificate PDFs are embedded in their timeline entries. The browser's built-in PDF viewer provides its available zoom and document controls.
 
 ## Add a certificate
 

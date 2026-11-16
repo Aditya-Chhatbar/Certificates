@@ -122,42 +122,60 @@ function createLink(label, href) {
 
 function createCertificateEntry(certificate) {
   const item = createElement('li', 'timeline-item');
-  const article = createElement('article', 'timeline-entry');
+  const article = createElement('article', 'certificate-card');
+  const copy = createElement('div', 'certificate-copy');
+  const category = createElement('span', 'certificate-category', certificate.category);
   const title = createElement('h3', 'entry-title', certificate.title);
-  const organization = createElement(
-    'p',
-    'entry-organization',
-    certificate.organization || 'Organization not listed'
-  );
+  const meta = createElement('p', 'entry-meta');
+  const organization = createElement('span', '', certificate.organization || 'Organization not listed');
   const description = createElement('p', 'entry-description', certificate.description);
   const topicList = createElement('ul', 'topic-list');
-  const links = createElement('div', 'entry-links');
+  const viewerWrap = createElement('div', 'certificate-pdf-wrap');
+  const verificationLink = certificate.verification
+    ? createLink('Official verification', certificate.verification)
+    : null;
 
-  if (certificate.dateInfo) {
+  if (certificate.dateInfo && !certificate.dateInfo.isRange) {
     const date = createElement(
-      certificate.dateInfo.isRange ? 'p' : 'time',
-      'entry-date',
+      'time',
+      '',
       certificate.dateInfo.label
     );
-    if (!certificate.dateInfo.isRange) {
-      date.dateTime = certificate.date;
-    }
-    article.append(title, organization, date, description);
+    date.dateTime = certificate.date;
+    meta.append(organization, createElement('span', 'entry-meta-separator', '/'), date);
   } else {
-    const date = createElement('p', 'entry-date', 'Completion date not listed');
-    article.append(title, organization, date, description);
+    const date = createElement(
+      'span',
+      '',
+      certificate.dateInfo ? certificate.dateInfo.label : 'Completion date not listed'
+    );
+    meta.append(organization, createElement('span', 'entry-meta-separator', '/'), date);
   }
 
   certificate.skills.forEach((skill) => {
     topicList.append(createElement('li', 'topic-tag', skill));
   });
 
-  links.append(createLink('View certificate ↗', `./${certificate.certificate}`));
-  if (certificate.verification) {
-    links.append(createLink('Verify credential ↗', certificate.verification));
-  }
+  const viewer = document.createElement('iframe');
+  viewer.className = 'certificate-pdf';
+  viewer.src = `./${certificate.certificate}#toolbar=1&navpanes=0&view=FitH`;
+  viewer.title = `Certificate document for ${certificate.title}`;
+  viewer.loading = 'eager';
+  viewer.referrerPolicy = 'no-referrer';
+  const fallback = createElement('p', 'pdf-fallback', 'This browser cannot display embedded PDFs. ');
+  const fallbackLink = createElement('a', '', 'Open the certificate PDF');
+  fallbackLink.href = `./${certificate.certificate}`;
+  fallbackLink.target = '_blank';
+  fallbackLink.rel = 'noopener noreferrer';
+  fallback.append(fallbackLink);
+  viewer.append(fallback);
 
-  article.append(topicList, links);
+  copy.append(category, title, meta, description, topicList);
+  if (verificationLink) {
+    copy.append(verificationLink);
+  }
+  viewerWrap.append(viewer);
+  article.append(copy, viewerWrap);
   item.append(article);
   return item;
 }
@@ -261,4 +279,81 @@ function initializeTimeline() {
   });
 }
 
+function initializeNavigation() {
+  const header = document.querySelector('.site-header');
+  const menuButton = document.getElementById('nav-toggle');
+  const menu = document.getElementById('site-nav');
+  const sectionLinks = Array.from(menu.querySelectorAll('a[href^="#"]'));
+  const mobileViewport = window.matchMedia('(max-width: 760px)');
+
+  function closeMenu() {
+    menu.hidden = true;
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.setAttribute('aria-label', 'Open navigation menu');
+  }
+
+  function syncMenuToViewport() {
+    menuButton.hidden = !mobileViewport.matches;
+    if (mobileViewport.matches) {
+      closeMenu();
+    } else {
+      menu.hidden = false;
+      menuButton.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function updateCurrentSection() {
+    const threshold = header.offsetHeight + 96;
+    let activeLink = sectionLinks[0];
+
+    sectionLinks.forEach((link) => {
+      const section = document.querySelector(link.getAttribute('href'));
+      if (section && section.getBoundingClientRect().top <= threshold) {
+        activeLink = link;
+      }
+    });
+
+    sectionLinks.forEach((link) => {
+      const isCurrent = link === activeLink;
+      link.classList.toggle('is-current', isCurrent);
+      if (isCurrent) {
+        link.setAttribute('aria-current', 'location');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  menuButton.addEventListener('click', () => {
+    const isExpanded = menuButton.getAttribute('aria-expanded') === 'true';
+    menu.hidden = isExpanded;
+    menuButton.setAttribute('aria-expanded', String(!isExpanded));
+    menuButton.setAttribute('aria-label', isExpanded ? 'Open navigation menu' : 'Close navigation menu');
+  });
+
+  menu.addEventListener('click', (event) => {
+    if (event.target.closest('a[href^="#"]') && mobileViewport.matches) {
+      closeMenu();
+    }
+  });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && menuButton.getAttribute('aria-expanded') === 'true') {
+      closeMenu();
+      menuButton.focus();
+    }
+  });
+
+  window.addEventListener('resize', syncMenuToViewport);
+  if (typeof mobileViewport.addEventListener === 'function') {
+    mobileViewport.addEventListener('change', syncMenuToViewport);
+  } else {
+    mobileViewport.addListener(syncMenuToViewport);
+  }
+  window.addEventListener('scroll', updateCurrentSection, { passive: true });
+  syncMenuToViewport();
+  updateCurrentSection();
+}
+
 initializeTimeline();
+initializeNavigation();
