@@ -18,7 +18,7 @@ window.certificateData = [
   {
     title: 'Semiconductor Microlearning',
     organization: 'Intel',
-    date: '2026-06-06',
+    date: '2026-10-31',
     category: 'Semiconductors',
     description:
       'Completed a microlearning module covering semiconductor fundamentals. Assessments were used to evaluate understanding.',
